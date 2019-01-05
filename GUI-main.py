@@ -1,4 +1,4 @@
-from tkinter import *
+import PySimpleGUI as sg
 import re
 
 def convertDNA(DNA):
@@ -20,21 +20,13 @@ def convertDNA(DNA):
             elif x is "C":
                 RNA_LIST.append("G")
         RNA = RNA.join(RNA_LIST)
-        print("")
-        print("RNA:", RNA)
-        Label(master, text="RNA: " + RNA).grid(row=1)
-        print("")
 
-        list(RNA)
         tempStr = ""
 
         for y in range(int((dnaLen/3 + 1))):
             if y > 0:
                 codonListChar.append([RNA[(3 * y - 3)], RNA[(3 * y - 2)], RNA[(3 * y - 1)]])
                 codonList.append(tempStr.join(codonListChar[y-1]))
-        print("Codon List:", codonList)
-        Label(master, text="Codon List: " + str(codonList)).grid(row=2)
-        print("")
 
         for z in range(len(codonList)):
             if codonListChar[z][0] is "A":
@@ -45,11 +37,13 @@ def convertDNA(DNA):
                 runG(codonListChar[z])
             elif codonListChar[z][0] is "C":
                 runC(codonListChar[z])
-        print("Amino Acids:", aminoAcidList)
-        Label(master, text="Amino Acids: " + str(aminoAcidList)).grid(row=3)
+
+        return [RNA, codonList, aminoAcidList]
 
     else:
-        print("Invalid input. \nPlease input a string that only contains 'ATGC' and has a length that is a multiple of three.")
+        return 'Error'
+
+
 
 
 def runA(codon):
@@ -119,13 +113,32 @@ def runC(codon):
             aminoAcidList.append("Glutamine")
 
 
+layout = [
+    [sg.Text('Enter DNA Here:'), sg.InputText(do_not_clear=True, key='dna_in'), sg.Button('Convert')],
+    [sg.Text('RNA: ', key='rna_out')],
+    [sg.Text('Codons: ', key='codon_out')],
+    [sg.Text('Amino Acids: ', key='amino_out')],
+    [sg.Button('Exit')]
+]
 
-master = Tk()
+window = sg.Window('DNA Converter').Layout(layout)
 
-Label(master, text="DNA: ").grid(row=0)
-e1 = Entry(master)
-e1.grid(row=0, column=1)
+while True:
+    event, values = window.Read()
+    print(event, values)
+    if event is None or event == 'Exit':
+        break
+    if event == 'Convert':
+        converted = convertDNA(values['dna_in'])
+        if converted == 'Error':
+            sg.Popup("Invalid input. \nPlease input a string that only contains 'ATGC' and has a length that is a multiple of three.", title='Error')
+            window.FindElement('dna_in').Update('')
+        else:
+            window.FindElement('rna_out').Update(('RNA:', converted[0]))
+            window.FindElement('codon_out').Update(('Codons: ' + str(converted[1])))
+            window.FindElement('amino_out').Update(('Amino Acids: ' + str(converted[2])))
 
-Button(master, text='Convert', command= lambda: convertDNA(e1.get())).grid(row=5, column=1, sticky=W, pady=4)
+window.Close()
 
-mainloop()
+
+
